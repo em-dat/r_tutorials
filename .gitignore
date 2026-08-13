@@ -1,0 +1,24 @@
+# Data files (downloaded by the user, see README)
+data/
+
+# Cloned upstream Python tutorials (reference only)
+_source_python_tutorials/
+
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# Jupyter
+.ipynb_checkpoints/
+
+# nbconvert output
+*_files/
+*.md
+!README.md
+
+# OS
+Thumbs.db
+.DS_Store
