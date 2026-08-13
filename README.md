@@ -2,8 +2,8 @@
 
 R counterparts of the [EM-DAT Python Tutorials](https://github.com/em-dat/python_tutorials).
 
-- EM-DAT R Tutorial 1: Basic Operations and Plotting *(in progress)*
-- EM-DAT R Tutorial 2: Making Maps *(in progress)*
+- [EM-DAT R Tutorial 1: Basic Operations and Plotting](./r_tutorial_1_basic_operations_and_plotting.ipynb)
+- [EM-DAT R Tutorial 2: Making Maps](./r_tutorial_2_making_maps.ipynb)
 
 **Note:** The Tutorials are also available on the [EM-DAT Documentation Website](https://doc.emdat.be/docs/additional-resources-and-tutorials/)
 
