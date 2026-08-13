@@ -46,7 +46,11 @@ files in a `data/` folder (git-ignored), or adjust the paths in the notebooks.
 |---|---|---|
 | `*_emdat_archive.xlsx` | Tutorials 1 & 2 | [EM-DAT Archive on Dataverse](https://doi.org/10.14428/DVN/I0LTPH) — or the latest release from [public.emdat.be](https://public.emdat.be/) (registration required, see [Data Accessibility](https://doc.emdat.be/docs/data-accessibility/)) |
 | `ne_110m_admin_0_countries/` | Tutorial 2 | [Natural Earth 1:110m Admin 0 – Countries](https://www.naturalearthdata.com/downloads/110m-cultural-vectors/) |
-| `gaul2014_2015.gpkg` | Tutorial 2 | [GAUL geometries](https://files.emdat.be/data/gaul_gpkg_and_license.zip) (~1.3 GB) |
+| `gadm41_JPN.gpkg` | Tutorial 2 | [GADM 4.1 – Japan geopackage](https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_JPN.gpkg) (~33 MB) |
+
+**Note on administrative units:** these tutorials use the `GADM Admin Units` column and
+[GADM 4.1](https://gadm.org/) geometries. The legacy `Admin Units` column refers to GAUL,
+which is no longer supported.
 
 ## License
 
