@@ -1,5 +1,6 @@
 ---
 title: EM-DAT R Tutorial 2
+output: html_document
 ---
 
 # Making Maps
@@ -141,6 +142,19 @@ gadm_adm1 <- gadm_adm1 |> select(GID_1, NAME_1)
 print(head(gadm_adm1))
 ```
 
+We will also generate a dictionary (as a vector of named values) to retrieve the `GID_1` from the `GID_2`, at a later stage.
+
+```{r}
+gadm_adm2 <- st_read("data/gadm41_JPN.gpkg", layer = "ADM_ADM_2", quiet = TRUE)
+
+if (any(duplicated(gadm_adm2$GID_2))) {
+  warning("Duplicated keys found in GID_2 identifiers")
+}
+
+# applying the GID_2 value as name for each corresponding value of GID_1
+gid_2to1 <- with(gadm_adm2, setNames(GID_1,GID_2))
+```
+
 ### Filter EM-DAT Data
 
 ```{r}
@@ -162,9 +176,9 @@ df_jpn
 
 We create an R function, `gadm_to_admin1`, to extract the administrative level 1 identifiers from the `GADM Admin Units` column.
 
-The `GADM Admin Units` column holds a JSON array whose entries provide either a level 1 identifier (`gid_1`) or a level 2 identifier (`gid_2`). GADM identifiers are *hierarchical strings*: the level 2 identifier `JPN.19.68_2` is nested under the level 1 identifier `JPN.19_1`. We can therefore derive the parent unit by trimming the string, with no spatial lookup required.
+The `GADM Admin Units` column holds a JSON array whose entries provide either a level 1 identifier (`gid_1`) or a level 2 identifier (`gid_2`). GADM identifiers are *hierarchical strings*: the level 2 identifier `JPN.19.68_2` is nested under the level 1 identifier `JPN.19_1`. We could therefore derive the parent unit by trimming the string, with no spatial lookup required.
 
-**Note**: The trailing `_1` or `_2` in a GADM identifier is a version suffix, not a level marker, which is why we always append `_1` when building a level 1 identifier.
+Yet, it is still preferable to avoid string manipulation and rely on relational matches in automated settings, using the dictionary previously generated.
 
 ```{r}
 #' Convert a GADM Admin Units JSON string to administrative level 1 identifiers.
@@ -178,15 +192,20 @@ gadm_to_admin1 <- function(json_str) {
   entries <- fromJSON(json_str, simplifyVector = FALSE)
   ids <- vapply(entries, function(entry) {
     if (!is.null(entry$gid_1)) {
-      entry$gid_1
+      return(entry$gid_1)
     } else if (!is.null(entry$gid_2)) {
-      # JPN.19.68_2 -> JPN.19_1
-      sub("^([A-Za-z]{3}\\.[0-9]+)\\..*$", "\\1_1", entry$gid_2)
-    } else {
-      stop("Administrative code is missing from the provided data.")
+      # dictionary lookup from the GID_2
+      gid_1 <- gid_2to1[entry$gid_2]
+      if (!is.na(gid_1)) {
+        return(gid_1)
+      }
     }
+    # fail if nothing was returned
+    stop(
+      "Administrative code is missing from the provided data or could not be matched against referential."
+    )
   }, character(1))
-  unique(ids)
+  return(unique(ids))
 }
 ```
 
