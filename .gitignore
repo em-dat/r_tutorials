@@ -1,18 +1,13 @@
 # Data files (downloaded by the user, see README)
 data/
 
-# Cloned upstream Python tutorials (reference only)
-_source_python_tutorials/
-
-# R
+# R and knitr products
 .Rproj.user/
 .Rhistory
 .RData
 .Ruserdata
 *.Rproj
-
-# Jupyter
-.ipynb_checkpoints/
+*.html
 
 # nbconvert output
 *_files/

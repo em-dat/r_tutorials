@@ -1,0 +1,250 @@
+---
+title: EM-DAT R Tutorial 2
+---
+
+# Making Maps
+
+If you have followed the [EM-DAT R Tutorial 1](./r_tutorial_1_basic_operations_and_plotting.ipynb) or are already familiar with [`dplyr`](https://dplyr.tidyverse.org/) and [`ggplot2`](https://ggplot2.tidyverse.org/), this second tutorial will show you basic examples on how to make maps with the EM-DAT data using the [`sf`](https://r-spatial.github.io/sf/) R package.
+
+**Note**: This tutorial is also available on the [EM-DAT Documentation Website](https://doc.emdat.be/docs/additional-resources-and-tutorials/).
+
+## Load Packages
+
+Let us load the necessary packages and print their versions. For this tutorial, we used `sf` v.1.1-2, `dplyr` v.1.2.0, `jsonlite` v.2.0.0, and `ggplot2` v.4.0.2. If your package versions are different, you may have to adapt this tutorial by checking the corresponding package documentation.
+
+```{r}
+# suppressPackageStartupMessages() hides the notes R prints when attaching
+# a package; these are informational only, and their language depends on
+# your system locale.
+suppressPackageStartupMessages({
+  library(readxl)    # read Excel files
+  library(dplyr)     # data manipulation
+  library(tidyr)     # data reshaping
+  library(sf)        # simple features: spatial vector data
+  library(jsonlite)  # parse JSON strings
+  library(ggplot2)   # plotting library
+})
+
+for (p in c("readxl", "dplyr", "tidyr", "sf", "jsonlite", "ggplot2")) {
+  cat(p, as.character(packageVersion(p)), "\n")
+}
+```
+
+## Creating a World Map
+
+To create a world map, we need the EM-DAT data and a shapefile containing the country geometries.
+
+**EM-DAT**: We download and load the EM-DAT data using `readxl`. As in Tutorial 1, we use the [EM-DAT Archive published on Dataverse](https://doi.org/10.14428/DVN/I0LTPH).
+
+**Country Shapefile**: We download a country shapefile from [Natural Earth Data](https://www.naturalearthdata.com/). For a world map, we download the low resolution [1:110m Admin 0 - Countries](https://www.naturalearthdata.com/downloads/110m-cultural-vectors/) and unzip it.
+
+### Load and Filter EM-DAT
+
+Let us load EM-DAT and filter it to make a global map of Earthquake disasters between 2000 and 2023. We calculate the number of unique identifiers (`DisNo.`) per country (`ISO`). We refer to the standard `ISO` column instead of the `Country` column of the [EM-DAT Public Table](https://doc.emdat.be/docs/data-structure-and-content/emdat-public-table/) to be able to make a join with the country shapefile.
+
+```{r}
+df <- read_excel("data/260430_emdat_archive.xlsx", guess_max = 100000)  # <-- modify file name or path
+
+earthquake_counts <- df |>
+  filter(
+    `Disaster Type` == "Earthquake",
+    `Start Year` >= 2000,
+    `Start Year` < 2024
+  ) |>
+  count(ISO, name = "EarthquakeCount")
+
+earthquake_counts
+```
+
+### Load the Country Shapefile
+
+We use the [`st_read`](https://r-spatial.github.io/sf/reference/st_read.html) function to load the country shapefile and parse it into an `sf` object. An `sf` object is similar to a `data.frame`, except that it has a geometry column.
+
+We provide the `dsn` argument, which is either a file name if located in the same directory as the running script, or a relative or absolute path, if not. In our case the shapefile with the `.shp` extension is located in the `ne_110m_admin_0_countries` folder.
+
+Since the object contains 168 attribute columns, we only keep the one we are interested in, i.e., `ISO_A3`. The `geometry` column is *sticky*: `sf` keeps it automatically through a `select`, so it does not need to be named.
+
+**Note**: We display `sf` objects with [`print`](https://r-spatial.github.io/sf/reference/print.html) throughout this tutorial. This gives the standard `sf` summary, reporting the number of features, the geometry type, the bounding box, and the coordinate reference system, all of which are worth checking after loading spatial data.
+
+```{r}
+gdf <- st_read(
+  "data/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp",  # <-- Change path if necessary
+  quiet = TRUE
+)
+
+gdf <- gdf |> select(ISO_A3)
+print(gdf)
+```
+
+**Important Notice**: Above, some geometries do not have a valid ISO code and are coded `-99` instead. Below, you will see that some ISO in EM-DAT are not matched with a geometry. Beyond this basic tutorial, we advise to carefully evaluate these correspondences and non-correspondences between ISO codes and to read the [EM-DAT Documentation about ISO codes](https://doc.emdat.be/docs/data-structure-and-content/spatial-information/).
+
+### Join the Two Datasets
+
+Let us merge the two datasets with a full join, using the [`full_join`](https://dplyr.tidyverse.org/reference/mutate-joins.html) function. We prefer a full join to keep the geometries of countries for which EM-DAT has no records.
+
+**Note**: The join keys have different names in the two tables, so we pair them with [`join_by`](https://dplyr.tidyverse.org/reference/join_by.html). Starting the pipe from `gdf` matters: the result keeps the `sf` class, and stays plottable as a map.
+
+```{r}
+earthquake_counts_with_geom <- gdf |>
+  full_join(earthquake_counts, by = join_by(ISO_A3 == ISO))
+
+print(earthquake_counts_with_geom)
+```
+
+### Make the Map
+
+To make the map, we use `ggplot2` together with the [`geom_sf`](https://ggplot2.tidyverse.org/reference/ggsf.html) layer, which understands the geometry column of an `sf` object and picks a sensible map projection automatically.
+
+We map the `EarthquakeCount` column to the `fill` aesthetic, and use [`scale_fill_distiller`](https://ggplot2.tidyverse.org/reference/scale_brewer.html) to apply a sequential `Reds` colour palette. Countries without records are drawn in light grey via the `na.value` argument.
+
+```{r}
+options(repr.plot.width = 9, repr.plot.height = 4)
+
+ggplot(earthquake_counts_with_geom) +
+  geom_sf(aes(fill = EarthquakeCount), colour = "white", linewidth = 0.1) +
+  scale_fill_distiller(
+    palette = "Reds",
+    direction = 1,
+    na.value = "lightgrey",
+    name = "Nb of EM-DAT\nEarthquake"
+  ) +
+  labs(x = "Lon.", y = "Lat.") +
+  theme_minimal()
+```
+
+## Creating a Map at Admin Level 1
+
+We can create a more detailed map using the `GADM Admin Units` column in the [EM-DAT Public Table](https://doc.emdat.be/docs/data-structure-and-content/emdat-public-table/). This column contains the identifiers of administrative units of level 1 or 2 as defined by the [Database of Global Administrative Areas (GADM), version 4.1](https://gadm.org/), for countries impacted by non-biological natural hazards.
+
+**Note**: EM-DAT also carries a legacy `Admin Units` column referring to the Global Administrative Unit Layer (GAUL). GAUL is no longer supported, and new work should use the `GADM Admin Units` column shown here.
+
+Similarly to the country map, we need a file containing the GADM geometries. GADM publishes one geopackage per country, so we only download [the Japanese one](https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_JPN.gpkg) (~33 MB), since this tutorial focuses on Japanese earthquake occurrence in EM-DAT.
+
+### Load the GADM Geopackage
+
+The file is a geopackage `.gpkg` that contains multiple layers. Let us first describe these layers with the [`st_layers`](https://r-spatial.github.io/sf/reference/st_layers.html) function.
+
+```{r}
+print(st_layers("data/gadm41_JPN.gpkg"))
+```
+
+* The `ADM_ADM_0` layer contains the country geometry.
+* The `ADM_ADM_1` layer contains the 47 Japanese prefectures. This is the level we map here.
+* The `ADM_ADM_2` layer contains the 1811 municipalities.
+
+GADM ships a ready-made administrative level 1 layer, so we can load it directly. Let us keep only the identifier `GID_1` and the name `NAME_1`.
+
+```{r}
+gadm_adm1 <- st_read("data/gadm41_JPN.gpkg", layer = "ADM_ADM_1", quiet = TRUE)
+
+gadm_adm1 <- gadm_adm1 |> select(GID_1, NAME_1)
+print(head(gadm_adm1))
+```
+
+### Filter EM-DAT Data
+
+```{r}
+df_jpn <- df |>
+  filter(
+    ISO == "JPN",
+    `Disaster Type` == "Earthquake",
+    `Start Year` >= 2000,
+    `Start Year` < 2024
+  ) |>
+  select(`DisNo.`, `GADM Admin Units`)
+
+df_jpn
+```
+
+**Note**: Some events are not geolocated at a finer administrative level and have a missing (`NA`) value.
+
+### Convert Admin 2 units to Admin 1 units
+
+We create an R function, `gadm_to_admin1`, to extract the administrative level 1 identifiers from the `GADM Admin Units` column.
+
+The `GADM Admin Units` column holds a JSON array whose entries provide either a level 1 identifier (`gid_1`) or a level 2 identifier (`gid_2`). GADM identifiers are *hierarchical strings*: the level 2 identifier `JPN.19.68_2` is nested under the level 1 identifier `JPN.19_1`. We can therefore derive the parent unit by trimming the string, with no spatial lookup required.
+
+**Note**: The trailing `_1` or `_2` in a GADM identifier is a version suffix, not a level marker, which is why we always append `_1` when building a level 1 identifier.
+
+```{r}
+#' Convert a GADM Admin Units JSON string to administrative level 1 identifiers.
+#'
+#' @param json_str A JSON string representing administrative areas, or NA.
+#' @return A character vector of unique GADM level 1 (GID_1) identifiers.
+gadm_to_admin1 <- function(json_str) {
+  if (is.na(json_str)) {
+    return(character(0))
+  }
+  entries <- fromJSON(json_str, simplifyVector = FALSE)
+  ids <- vapply(entries, function(entry) {
+    if (!is.null(entry$gid_1)) {
+      entry$gid_1
+    } else if (!is.null(entry$gid_2)) {
+      # JPN.19.68_2 -> JPN.19_1
+      sub("^([A-Za-z]{3}\\.[0-9]+)\\..*$", "\\1_1", entry$gid_2)
+    } else {
+      stop("Administrative code is missing from the provided data.")
+    }
+  }, character(1))
+  unique(ids)
+}
+```
+
+We apply the function to all elements of the `GADM Admin Units` column. Because each event may span several administrative units, the function returns a vector of varying length, which we store in a *list column* using [`lapply`](https://rdrr.io/r/base/lapply.html).
+
+**Note**: A list column holds a whole vector in each cell, so it has no fixed width and cannot be shown as an ordinary table. Below we collapse each list into a single comma-separated string purely for display; `df_jpn` itself keeps the list column, which is what the next step needs.
+
+```{r}
+df_jpn <- df_jpn |>
+  mutate(GID_1 = lapply(`GADM Admin Units`, gadm_to_admin1))
+
+# Collapse the list column to a string, for display only
+df_jpn |>
+  select(`DisNo.`, GID_1) |>
+  mutate(GID_1 = sapply(GID_1, paste, collapse = ", "))
+```
+
+### Count Earthquakes per Admin 1 Units
+
+This can be done by applying the [`unnest_longer`](https://tidyr.tidyverse.org/reference/unnest_longer.html) function on the new `GID_1` list column. The function adds one row per identifier contained in each list. Then the counting can be performed using the former `count` approach.
+
+**Note**: Events with no administrative unit hold an empty vector and are dropped by `unnest_longer`.
+
+```{r}
+count_per_adm1 <- df_jpn |>
+  unnest_longer(GID_1) |>
+  count(GID_1, name = "EQ Count")
+
+head(count_per_adm1)
+```
+
+### Join the Two Datasets
+
+Again, we can use a join to bring the two datasets together, here on the shared `GID_1` column. We use a [`left_join`](https://dplyr.tidyverse.org/reference/mutate-joins.html) starting from the geometries, so that every prefecture is kept on the map, including those never affected.
+
+```{r}
+gdf_jpn_adm1_merged <- gadm_adm1 |>
+  left_join(count_per_adm1, by = "GID_1")
+
+print(gdf_jpn_adm1_merged)
+```
+
+### Make the Map
+
+```{r}
+options(repr.plot.width = 6, repr.plot.height = 6)
+
+ggplot(gdf_jpn_adm1_merged) +
+  geom_sf(aes(fill = `EQ Count`), colour = "grey70", linewidth = 0.3) +
+  scale_fill_distiller(
+    palette = "YlOrRd",
+    direction = 1,
+    na.value = "white",
+    name = "Earthquake Count\nin EM-DAT"
+  ) +
+  labs(x = "Longitude", y = "Latitude") +
+  theme_minimal()
+```
+
+We have just covered the basics on how to join the EM-DAT data with an [`sf`](https://r-spatial.github.io/sf/) spatial object to make maps. To delve further into your analyses, we encourage you to continue your learning of [`sf`](https://r-spatial.github.io/sf/) and [`ggplot2`](https://ggplot2.tidyverse.org/), or, in particular, [`tmap`](https://r-tmap.github.io/tmap/) for more advanced map customization, with the many resources available online. The book [Geocomputation with R](https://r.geocompx.org/) is a good place to start.
+
