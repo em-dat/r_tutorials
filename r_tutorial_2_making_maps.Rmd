@@ -13,22 +13,14 @@ If you have followed the [EM-DAT R Tutorial 1](./r_tutorial_1_basic_operations_a
 
 Let us load the necessary packages and print their versions. For this tutorial, we used `sf` v.1.1-2, `dplyr` v.1.2.0, `jsonlite` v.2.0.0, and `ggplot2` v.4.0.2. If your package versions are different, you may have to adapt this tutorial by checking the corresponding package documentation.
 
-```{r}
-# suppressPackageStartupMessages() hides the notes R prints when attaching
-# a package; these are informational only, and their language depends on
-# your system locale.
-suppressPackageStartupMessages({
-  library(readxl)    # read Excel files
-  library(dplyr)     # data manipulation
-  library(tidyr)     # data reshaping
-  library(sf)        # simple features: spatial vector data
-  library(jsonlite)  # parse JSON strings
-  library(ggplot2)   # plotting library
-})
-
-for (p in c("readxl", "dplyr", "tidyr", "sf", "jsonlite", "ggplot2")) {
-  cat(p, as.character(packageVersion(p)), "\n")
-}
+```{r message=FALSE}
+library(readxl)    # read Excel files
+library(dplyr)     # data manipulation
+library(tidyr)     # data reshaping
+library(sf)        # simple features: spatial vector data
+library(jsonlite)  # parse JSON strings
+library(ggplot2)   # plotting library
+set_theme(theme_minimal())
 ```
 
 ## Creating a World Map
@@ -44,7 +36,8 @@ To create a world map, we need the EM-DAT data and a shapefile containing the co
 Let us load EM-DAT and filter it to make a global map of Earthquake disasters between 2000 and 2023. We calculate the number of unique identifiers (`DisNo.`) per country (`ISO`). We refer to the standard `ISO` column instead of the `Country` column of the [EM-DAT Public Table](https://doc.emdat.be/docs/data-structure-and-content/emdat-public-table/) to be able to make a join with the country shapefile.
 
 ```{r}
-df <- read_excel("data/260430_emdat_archive.xlsx", guess_max = 100000)  # <-- modify file name or path
+# modify file name or path as needed
+df <- read_excel("data/260430_emdat_archive.xlsx", guess_max = Inf)
 
 earthquake_counts <- df |>
   filter(
@@ -99,8 +92,6 @@ To make the map, we use `ggplot2` together with the [`geom_sf`](https://ggplot2.
 We map the `EarthquakeCount` column to the `fill` aesthetic, and use [`scale_fill_distiller`](https://ggplot2.tidyverse.org/reference/scale_brewer.html) to apply a sequential `Reds` colour palette. Countries without records are drawn in light grey via the `na.value` argument.
 
 ```{r}
-options(repr.plot.width = 9, repr.plot.height = 4)
-
 ggplot(earthquake_counts_with_geom) +
   geom_sf(aes(fill = EarthquakeCount), colour = "white", linewidth = 0.1) +
   scale_fill_distiller(
@@ -109,8 +100,7 @@ ggplot(earthquake_counts_with_geom) +
     na.value = "lightgrey",
     name = "Nb of EM-DAT\nEarthquake"
   ) +
-  labs(x = "Lon.", y = "Lat.") +
-  theme_minimal()
+  labs(x = "Lon.", y = "Lat.")
 ```
 
 ## Creating a Map at Admin Level 1
@@ -251,18 +241,15 @@ print(gdf_jpn_adm1_merged)
 ### Make the Map
 
 ```{r}
-options(repr.plot.width = 6, repr.plot.height = 6)
-
 ggplot(gdf_jpn_adm1_merged) +
-  geom_sf(aes(fill = `EQ Count`), colour = "grey70", linewidth = 0.3) +
+  geom_sf(aes(fill = `EQ Count`), linewidth = 0.1) +
   scale_fill_distiller(
     palette = "YlOrRd",
     direction = 1,
     na.value = "white",
     name = "Earthquake Count\nin EM-DAT"
   ) +
-  labs(x = "Longitude", y = "Latitude") +
-  theme_minimal()
+  labs(x = "Longitude", y = "Latitude")
 ```
 
 We have just covered the basics on how to join the EM-DAT data with an [`sf`](https://r-spatial.github.io/sf/) spatial object to make maps. To delve further into your analyses, we encourage you to continue your learning of [`sf`](https://r-spatial.github.io/sf/) and [`ggplot2`](https://ggplot2.tidyverse.org/), or, in particular, [`tmap`](https://r-tmap.github.io/tmap/) for more advanced map customization, with the many resources available online. The book [Geocomputation with R](https://r.geocompx.org/) is a good place to start.

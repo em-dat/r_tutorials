@@ -1,5 +1,6 @@
 ---
 title: EM-DAT R Tutorial 1
+output: html_document
 ---
 
 # Basic Operations and Plotting
@@ -12,20 +13,12 @@ This tutorial shows basic examples on how to load, handle, and plot the EM-DAT d
 
 Let us load the necessary packages and print their versions. For this tutorial, we used `readxl` v.1.4.5, `dplyr` v.1.2.0, `tidyr` v.1.3.2, and `ggplot2` v.4.0.2. If your package versions are different, you may have to adapt this tutorial by checking the corresponding package documentation.
 
-```{r}
-# suppressPackageStartupMessages() hides the notes R prints when attaching
-# a package; these are informational only, and their language depends on
-# your system locale.
-suppressPackageStartupMessages({
-  library(readxl)   # read Excel files
-  library(dplyr)    # data manipulation
-  library(tidyr)    # data reshaping
-  library(ggplot2)  # plotting library
-})
-
-for (p in c("readxl", "dplyr", "tidyr", "ggplot2")) {
-  cat(p, as.character(packageVersion(p)), "\n")
-}
+```{r message=FALSE}
+library(readxl)   # read Excel files
+library(dplyr)    # data manipulation
+library(tidyr)    # data reshaping
+library(ggplot2)  # plotting library
+set_theme(theme_minimal())
 ```
 
 ## Load EM-DAT
@@ -43,7 +36,8 @@ To load EM-DAT:
 3. If not in the same folder as the R script, replace the filename with the relative path or the full path, e.g., `E:/MyDATa/260430_emdat_archive.xlsx`.
 
 ```{r}
-df <- read_excel("data/260430_emdat_archive.xlsx", guess_max = 100000)  # <-- modify file name or path
+# modify file name or path as needed
+df <- read_excel("data/260430_emdat_archive.xlsx", guess_max = Inf)
 glimpse(df)
 ```
 
@@ -108,12 +102,7 @@ ggplot(eq_cnt, aes(x = factor(`Start Year`), y = Count)) +
   # Define y-axis tick marks
   scale_y_continuous(breaks = 0:3) +
   # Set axis labels and title
-  labs(
-    x = "Year",
-    y = "N° of Earthquakes",
-    title = "EM-DAT Earthquakes in Japan (2000-2023)"
-  ) +
-  theme_minimal()
+  labs(x = "Year", y = "N° of Earthquakes", title = "EM-DAT Earthquakes in Japan (2000-2023)")
 ```
 
 ## Example 2: Comparing Regions
@@ -163,8 +152,7 @@ ggplot(eq_sum, aes(x = `Total Deaths`, y = Region)) +
     x = "Total Earthquake Deaths",
     y = NULL,
     title = "EM-DAT Earthquake Deaths by Regions"
-  ) +
-  theme_minimal()
+  )
 ```
 
 ## Example 3: Multiple Grouping
@@ -197,8 +185,7 @@ options(repr.plot.width = 7, repr.plot.height = 3.5)
 
 ggplot(eq_reg_ts, aes(x = `Start Year`, y = `Total Deaths`, fill = Region)) +
   geom_col() +
-  labs(y = "Total Deaths", title = "EM-DAT Earthquake Deaths by Regions") +
-  theme_minimal()
+  labs(y = "Total Deaths", title = "EM-DAT Earthquake Deaths by Regions")
 ```
 
 In order to be able to visualize the data in more detail, let us split the chart into one panel per region using [`facet_wrap`](https://ggplot2.tidyverse.org/reference/facet_wrap.html). Setting `scales = "free_y"` lets each panel use its own y axis range.
@@ -209,8 +196,7 @@ options(repr.plot.width = 7, repr.plot.height = 7)
 ggplot(eq_reg_ts, aes(x = `Start Year`, y = `Total Deaths`)) +
   geom_col() +
   facet_wrap(~ Region, ncol = 1, scales = "free_y") +
-  labs(y = "Total Deaths") +
-  theme_minimal()
+  labs(y = "Total Deaths")
 ```
 
 We have just covered the most common manipulations applied to a [`dplyr`](https://dplyr.tidyverse.org/) tibble containing the EM-DAT data. To delve further into your analyses, we encourage you to continue your learning of [dplyr](https://dplyr.tidyverse.org/) and [ggplot2](https://ggplot2.tidyverse.org/) with the many resources available online, starting with [R for Data Science](https://r4ds.hadley.nz/).
