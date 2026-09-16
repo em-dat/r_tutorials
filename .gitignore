@@ -8,6 +8,7 @@ data/
 .Ruserdata
 *.Rproj
 *.html
+*.pdf
 
 # nbconvert output
 *_files/
