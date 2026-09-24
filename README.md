@@ -11,36 +11,36 @@ R counterparts of the [EM-DAT Python Tutorials](https://github.com/em-dat/python
 
 ### 1. Install R
 
-These tutorials were written with **R 4.5.3**. Download R from [CRAN](https://cran.r-project.org/).
+These tutorials were written with **R 4.5.3**. Download and install R from [CRAN](https://cran.r-project.org/).
 
-### 2. Install the R packages
+RTools is also required to install `sf`. Download and install RTools from [CRAN](https://cran.r-project.org/bin/windows/Rtools/rtools45/rtools.html)
 
-```bash
-Rscript install_packages.R
+RStudio is optional to render the RMarkdown tutorials as html but will ease the interaction with the provided code.
+
+### 2. Restore the `renv` setup
+
+A list of dependencies along with the versions to use is provided using the `renv` package (which comes installed with r).
+The local environment can be restored with the following calls from the R Console :
+
+```R
+renv::activate()
+renv::restore()
 ```
 
-This installs `readxl`, `dplyr`, `tidyr`, `ggplot2`, `sf`, `jsonlite`, `scales`, and `IRkernel`.
+If errors occur for a given package installation, please refer to their respective documentation for additional installation steps.
+For example, the [`sf` package installation](https://r-spatial.github.io/sf/#installing) may require additional steps on MacOS and Linux.
 
-### 3. Register the R kernel with Jupyter
+### 3. Using the RMarkdown notebooks
 
-The tutorials are Jupyter notebooks running an R kernel. Register it once:
+The required tools are normally installed after the `renv` restoration. The RMarkdown notebooks may be openned and interacted with from RStudio or Visual Studio Code.
 
-```bash
-Rscript -e "IRkernel::installspec()"
-```
+Alternatively, the users may generate the reports using knitr, for HTML or PDF static outputs.
 
-Then start the notebook server:
 
-```bash
-jupyter notebook
-```
+## Retrieve datasets
 
-Select the **R** kernel when opening a notebook.
-
-## Data
-
-The tutorials rely on data that is **not included in this repository**. Place downloaded
-files in a `data/` folder (git-ignored), or adjust the paths in the notebooks.
+The tutorials rely on data that is **not included in this repository**.
+Place the downloaded files in a `data/` folder (git-ignored), or adjust the paths in the notebooks.
 
 | File | Used by | Source |
 |---|---|---|
