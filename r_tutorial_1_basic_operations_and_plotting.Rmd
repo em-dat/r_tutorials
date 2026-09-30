@@ -25,9 +25,9 @@ set_theme(theme_minimal())
 
 To load EM-DAT:
 
-* Download the EM-DAT data at https://public.emdat.be/ (registration is required, see the EM-DAT Documentation page on [Data Accessibility](https://doc.emdat.be/docs/data-accessibility/)). This tutorial uses the [EM-DAT Archive published on Dataverse](https://doi.org/10.14428/DVN/I0LTPH), which covers the years 1900 to 2024;
-* Use the [`read_excel`](https://readxl.tidyverse.org/reference/read_excel.html) function to load and parse the data into a `tibble`, R's modern take on the `data.frame`;
-* Check if the data has been successfully parsed with the [`glimpse`](https://dplyr.tidyverse.org/reference/glimpse.html) function.
+- Download the EM-DAT data at https://public.emdat.be/ (registration is required, see the EM-DAT Documentation page on [Data Accessibility](https://doc.emdat.be/docs/data-accessibility/)). This tutorial uses the [EM-DAT Archive published on Dataverse](https://doi.org/10.14428/DVN/I0LTPH), which covers the years 1900 to 2024;
+- Use the [`read_excel`](https://readxl.tidyverse.org/reference/read_excel.html) function to load and parse the data into a `tibble`, R's modern take on the `data.frame`;
+- Check if the data has been successfully parsed with the [`glimpse`](https://dplyr.tidyverse.org/reference/glimpse.html) function.
 
 **Notes**:
 
@@ -72,9 +72,9 @@ head(eq_jpn, 5)
 
 Let us group the data to calculate the number of earthquake events by year and plot the results.
 
-* Use the [`count`](https://dplyr.tidyverse.org/reference/count.html) function to tally the number of rows per group, e.g., per `Start Year`;
-* Equivalently, you can combine [`group_by`](https://dplyr.tidyverse.org/reference/group_by.html) with [`summarise`](https://dplyr.tidyverse.org/reference/summarise.html) and the [`n`](https://dplyr.tidyverse.org/reference/context.html) helper;
-* Plot the results using [`ggplot`](https://ggplot2.tidyverse.org/reference/ggplot.html) with a [`geom_col`](https://ggplot2.tidyverse.org/reference/geom_bar.html) layer.
+- Use the [`count`](https://dplyr.tidyverse.org/reference/count.html) function to tally the number of rows per group, e.g., per `Start Year`;
+- Equivalently, you can combine [`group_by`](https://dplyr.tidyverse.org/reference/group_by.html) with [`summarise`](https://dplyr.tidyverse.org/reference/summarise.html) and the [`n`](https://dplyr.tidyverse.org/reference/context.html) helper;
+- Plot the results using [`ggplot`](https://ggplot2.tidyverse.org/reference/ggplot.html) with a [`geom_col`](https://ggplot2.tidyverse.org/reference/geom_bar.html) layer.
 
 **Note**: `n()` counts every row in the group, including those with missing values in other columns. To count only non-missing values in a given column, use `sum(!is.na(x))` instead. Since the field `Start Year` is always defined, both approaches return the same result here.
 
@@ -123,9 +123,9 @@ head(eq_all, 5)
 
 In this case,
 
-* Use [`group_by`](https://dplyr.tidyverse.org/reference/group_by.html) to group based on the `Region` column;
-* Use [`summarise`](https://dplyr.tidyverse.org/reference/summarise.html) with `sum` as the aggregation function for the `Total Deaths` field;
-* Pass `na.rm = TRUE` to ignore missing values, which otherwise propagate and make the whole sum `NA`.
+- Use [`group_by`](https://dplyr.tidyverse.org/reference/group_by.html) to group based on the `Region` column;
+- Use [`summarise`](https://dplyr.tidyverse.org/reference/summarise.html) with `sum` as the aggregation function for the `Total Deaths` field;
+- Pass `na.rm = TRUE` to ignore missing values, which otherwise propagate and make the whole sum `NA`.
 
 ```{r}
 eq_sum <- eq_all |>
@@ -137,9 +137,9 @@ eq_sum
 
 Finally, let us make a horizontal bar chart of it. In particular,
 
-* map `Total Deaths` to the x axis and `Region` to the y axis to obtain horizontal bars;
-* use [`scale_y_discrete`](https://ggplot2.tidyverse.org/reference/scale_discrete.html) with `limits = rev` to display the regions in alphabetical order from top to bottom;
-* use [`label_number`](https://scales.r-lib.org/reference/label_number.html) from the `scales` package to express the x axis in thousands of deaths.
+- map `Total Deaths` to the x axis and `Region` to the y axis to obtain horizontal bars;
+- use [`scale_y_discrete`](https://ggplot2.tidyverse.org/reference/scale_discrete.html) with `limits = rev` to display the regions in alphabetical order from top to bottom;
+- use [`label_number`](https://scales.r-lib.org/reference/label_number.html) from the `scales` package to express the x axis in thousands of deaths.
 
 ```{r}
 options(repr.plot.width = 5, repr.plot.height = 3)

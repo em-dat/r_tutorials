@@ -119,9 +119,9 @@ The file is a geopackage `.gpkg` that contains multiple layers. Let us first des
 print(st_layers("data/gadm41_JPN.gpkg"))
 ```
 
-* The `ADM_ADM_0` layer contains the country geometry.
-* The `ADM_ADM_1` layer contains the 47 Japanese prefectures. This is the level we map here.
-* The `ADM_ADM_2` layer contains the 1811 municipalities.
+- The `ADM_ADM_0` layer contains the country geometry.
+- The `ADM_ADM_1` layer contains the 47 Japanese prefectures. This is the level we map here.
+- The `ADM_ADM_2` layer contains the 1811 municipalities.
 
 GADM ships a ready-made administrative level 1 layer, so we can load it directly. Let us keep only the identifier `GID_1` and the name `NAME_1`.
 
