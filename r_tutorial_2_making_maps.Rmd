@@ -11,7 +11,9 @@ If you have followed the [EM-DAT R Tutorial 1](./r_tutorial_1_basic_operations_a
 
 ## Load Packages
 
-Let us load the necessary packages and print their versions. For this tutorial, we used `sf` v.1.1-2, `dplyr` v.1.2.0, `jsonlite` v.2.0.0, and `ggplot2` v.4.0.2. If your package versions are different, you may have to adapt this tutorial by checking the corresponding package documentation.
+The appropriate package versions are defined in the renv lock file in the project root directory. Refer to the project README.md file for installation instructions.
+
+After loading the packages, we set a default theme for ggplot2 outputs. This last step is not necessary but ensures consistency accross plots, without the need to specify the use of `theme_minimal()` for each output.
 
 ```{r message=FALSE}
 library(readxl)    # read Excel files
@@ -43,7 +45,7 @@ earthquake_counts <- df |>
   filter(
     `Disaster Type` == "Earthquake",
     `Start Year` >= 2000,
-    `Start Year` < 2024
+    `Start Year` <= 2023
   ) |>
   count(ISO, name = "EarthquakeCount")
 
@@ -153,7 +155,7 @@ df_jpn <- df |>
     ISO == "JPN",
     `Disaster Type` == "Earthquake",
     `Start Year` >= 2000,
-    `Start Year` < 2024
+    `Start Year` <= 2023
   ) |>
   select(`DisNo.`, `GADM Admin Units`)
 

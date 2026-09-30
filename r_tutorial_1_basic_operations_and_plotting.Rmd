@@ -11,7 +11,9 @@ This tutorial shows basic examples on how to load, handle, and plot the EM-DAT d
 
 ## Load Packages
 
-Let us load the necessary packages and print their versions. For this tutorial, we used `readxl` v.1.4.5, `dplyr` v.1.2.0, `tidyr` v.1.3.2, and `ggplot2` v.4.0.2. If your package versions are different, you may have to adapt this tutorial by checking the corresponding package documentation.
+The appropriate package versions are defined in the renv lock file in the project root directory. Refer to the project README.md file for installation instructions.
+
+After loading the packages, we set a default theme for ggplot2 outputs. This last step is not necessary but ensures consistency accross plots, without the need to specify the use of `theme_minimal()` for each output.
 
 ```{r message=FALSE}
 library(readxl)   # read Excel files
