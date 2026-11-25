@@ -5,42 +5,29 @@ R counterparts of the [EM-DAT Python Tutorials](https://github.com/em-dat/python
 - [EM-DAT R Tutorial 1: Basic Operations and Plotting](./r_tutorial_1_basic_operations_and_plotting.ipynb)
 - [EM-DAT R Tutorial 2: Making Maps](./r_tutorial_2_making_maps.ipynb)
 
-**Note:** The Tutorials are also available on the [EM-DAT Documentation Website](https://doc.emdat.be/docs/additional-resources-and-tutorials/)
+**Note:** Additional resources are available on the [EM-DAT Documentation Website](https://doc.emdat.be/docs/additional-resources-and-tutorials/)
 
 ## Setting up
 
 ### 1. Install R
 
-These tutorials were written with **R 4.5.3**. Download and install R from [CRAN](https://cran.r-project.org/).
+These tutorials were written with **R 4.5.3**. Download R from [CRAN](https://cran.r-project.org/).
 
-RTools is also required to install `sf`. Download and install RTools from [CRAN](https://cran.r-project.org/bin/windows/Rtools/rtools45/rtools.html)
+### 2. Restoring the `renv` setup
 
-RStudio is optional to render the RMarkdown tutorials as html but will ease the interaction with the provided code.
-
-### 2. Restore the `renv` setup
-
-A list of dependencies along with the versions to use is provided using the `renv` package (which comes installed with r).
-The local environment can be restored with the following calls from the R Console :
+Run the following commands from an R console, in the project root directory.
 
 ```R
-renv::activate()
+renv::activate() # may be redundant when called from RStudio.renv
 renv::restore()
 ```
 
-If errors occur for a given package installation, please refer to their respective documentation for additional installation steps.
-For example, the [`sf` package installation](https://r-spatial.github.io/sf/#installing) may require additional steps on MacOS and Linux.
+This action installs all the required version-specific dependencies `readxl`, `dplyr`, `tidyr`, `ggplot2`, `sf`, `jsonlite`, and `scales` as defined in the renv.lock file.
 
-### 3. Using the RMarkdown notebooks
+## Data
 
-The required tools are normally installed after the `renv` restoration. The RMarkdown notebooks may be openned and interacted with from RStudio or Visual Studio Code.
-
-Alternatively, the users may generate the reports using knitr, for HTML or PDF static outputs.
-
-
-## Retrieve datasets
-
-The tutorials rely on data that is **not included in this repository**.
-Place the downloaded files in a `data/` folder (git-ignored), or adjust the paths in the notebooks.
+The tutorials rely on data that is **not included in this repository**. Place downloaded
+files in a `data/` folder (git-ignored), or adjust the paths in the notebooks.
 
 | File | Used by | Source |
 |---|---|---|
@@ -51,6 +38,20 @@ Place the downloaded files in a `data/` folder (git-ignored), or adjust the path
 **Note on administrative units:** these tutorials use the `GADM Admin Units` column and
 [GADM 4.1](https://gadm.org/) geometries. The legacy `Admin Units` column refers to GAUL,
 which is no longer supported.
+
+## Generating the reports
+
+The Rmarkdown notebooks are intended for interactive use from Rstudio, Positron or other R GUI environments. It is however possible to render the full html or pdf reports from the R REPL.
+
+```R
+# html rendering (default)
+rmarkdown::render("r_tutorial_1_basic_operations_and_plotting.Rmd")
+rmarkdown::render("r_tutorial_2_making_maps.Rmd")
+
+# pdf rendering
+rmarkdown::render("r_tutorial_1_basic_operations_and_plotting.Rmd", output_format="pdf_document")
+rmarkdown::render("r_tutorial_2_making_maps.Rmd", output_format="pdf_document")
+```
 
 ## License
 
