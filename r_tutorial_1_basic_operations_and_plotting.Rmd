@@ -16,10 +16,10 @@ The appropriate package versions are defined in the renv lock file in the projec
 After loading the packages, we set a default theme for ggplot2 outputs. This last step is not necessary but ensures consistency accross plots, without the need to specify the use of `theme_minimal()` for each output.
 
 ```{r message=FALSE}
-library(readxl)   # read Excel files
-library(dplyr)    # data manipulation
-library(tidyr)    # data reshaping
-library(ggplot2)  # plotting library
+library(readxl) # read Excel files
+library(dplyr) # data manipulation
+library(tidyr) # data reshaping
+library(ggplot2) # plotting library
 set_theme(theme_minimal())
 ```
 
@@ -33,7 +33,7 @@ To load EM-DAT:
 
 **Notes**:
 
-1. We set `guess_max = 100000` so that `read_excel` scans every row before deciding each column's type. By default it only inspects the first 1000 rows, which would mistype the sparsely populated columns at the end of the table.
+1. We set `guess_max = Inf` so that `read_excel` scans every row before deciding each column's type. By default it only inspects the first 1000 rows, which would mistype the sparsely populated columns at the end of the table.
 2. Another option is to export the `.xlsx` file into a `.csv`, and use the [`read_csv`](https://readr.tidyverse.org/reference/read_delim.html) function from the `readr` package;
 3. If not in the same folder as the R script, replace the filename with the relative path or the full path, e.g., `E:/MyDATa/260430_emdat_archive.xlsx`.
 
@@ -47,23 +47,22 @@ glimpse(df)
 
 ### Filtering
 
-Let us focus on the EM-DAT earthquakes in Japan from the years 2000 to 2023 and create a suitable filter utilizing the EM-DAT columns `Disaster Type`, `ISO` and `Start Year`.
-
-For simplicity, let's retain only the columns `Start Year`, `Magnitude`, `Total Deaths`, and `Total Affected` and display the first five entries using the [`head`](https://rdrr.io/r/utils/head.html) function.
+Let us focus on the EM-DAT earthquakes in Japan from the years 2000 to 2023. We first create a filter for the columns `Disaster Type`, `ISO` and `Start Year`. In this first preview, we only print the columns `Start Year`, `Magnitude`, `Total Deaths`, and `Total Affected` for the  first five entries using the [`head`](https://rdrr.io/r/utils/head.html) function.
 
 **Notes**:
 
-1. Column names containing spaces or special characters must be wrapped in backticks in R, e.g., `` `Start Year` ``.
-2. We use the native pipe operator `|>` to chain operations, passing the result of one function as the first argument of the next.
+1. Column names containing spaces or special characters must be wrapped in backticks in R, e.g. `` `Start Year` ``.
+2. We use the native pipe operator `|>` to chain operations, passing the result of the left-hand function as the first argument of the next (on the right side of the pipe). Keep in mind that there are [notable differences](https://opensource.posit.co/blog/2023-04-21_base-vs-magrittr-pipe/) between the R native pipe `|>` and other package-provided pipes (from `dplyr` or `magrittr`).
 3. The archive file covers the years 1900 to 2024, so we set an explicit lower bound on `Start Year`. For further details about the columns, we refer to the EM-DAT Documentation page [EM-DAT Public Table](https://doc.emdat.be/docs/data-structure-and-content/emdat-public-table/).
 
 ```{r}
 eq_jpn <- df |>
   filter(
+    # must meet all the conditions (AND/conjunction)
     `Disaster Type` == "Earthquake",
     ISO == "JPN",
     `Start Year` >= 2000,
-    `Start Year` < 2024
+    `Start Year` <= 2023
   ) |>
   select(`Start Year`, Magnitude, `Total Deaths`, `Total Affected`)
 
@@ -72,42 +71,33 @@ head(eq_jpn, 5)
 
 ### Grouping
 
-Let us group the data to calculate the number of earthquake events by year and plot the results.
+We then group the data to aggregate the number of earthquake events by year and plot the results.
 
-- Use the [`count`](https://dplyr.tidyverse.org/reference/count.html) function to tally the number of rows per group, e.g., per `Start Year`;
-- Equivalently, you can combine [`group_by`](https://dplyr.tidyverse.org/reference/group_by.html) with [`summarise`](https://dplyr.tidyverse.org/reference/summarise.html) and the [`n`](https://dplyr.tidyverse.org/reference/context.html) helper;
-- Plot the results using [`ggplot`](https://ggplot2.tidyverse.org/reference/ggplot.html) with a [`geom_col`](https://ggplot2.tidyverse.org/reference/geom_bar.html) layer.
-
-**Note**: `n()` counts every row in the group, including those with missing values in other columns. To count only non-missing values in a given column, use `sum(!is.na(x))` instead. Since the field `Start Year` is always defined, both approaches return the same result here.
+- Use the [`count`](https://dplyr.tidyverse.org/reference/count.html) function to tally the number of rows per group, providing a column name, `Start Year` in this case;
+- Plot the results using [`ggplot`](https://ggplot2.tidyverse.org/reference/ggplot.html) with a [`geom_col`](https://ggplot2.tidyverse.org/reference/geom_bar.html) layer. It renders individual values of the dataset passed to `ggplot`, which is fine here as we already aggregated our data per `Start Year`.
 
 ```{r}
 eq_cnt <- eq_jpn |> count(`Start Year`, name = "Count")
 
-ggplot(eq_cnt, aes(x = factor(`Start Year`), y = Count)) +
-  geom_col() +
-  labs(x = NULL, y = "Count")
+ggplot(eq_cnt, aes(x = `Start Year`, y = Count)) +
+  geom_col()
 ```
 
 ### Customize Chart
 
-A `ggplot` is built by adding layers with the `+` operator. To refine the chart, let us add scale and label layers, and adjust the figure size.
-
-**Note**: In a Jupyter notebook, the figure size is controlled with `options(repr.plot.width = ..., repr.plot.height = ...)`, expressed in inches. Outside a notebook, you would set the size when saving with [`ggsave`](https://ggplot2.tidyverse.org/reference/ggsave.html).
+A `ggplot` is built by adding layers with the `+` operator. To refine the chart, we add labels for the axis and a plot title.
 
 ```{r}
-# Set the figure size for this plot
-options(repr.plot.width = 7, repr.plot.height = 2.5)
-
-ggplot(eq_cnt, aes(x = factor(`Start Year`), y = Count)) +
-  # Draw one bar per year
+ggplot(eq_cnt, aes(x = `Start Year`, y = Count)) +
   geom_col() +
-  # Define y-axis tick marks
-  scale_y_continuous(breaks = 0:3) +
-  # Set axis labels and title
-  labs(x = "Year", y = "N° of Earthquakes", title = "EM-DAT Earthquakes in Japan (2000-2023)")
+  labs(
+    x = "Year",
+    y = "N° of Earthquakes",
+    title = "EM-DAT Earthquakes in Japan (2000-2023)"
+  )
 ```
 
-## Example 2: Comparing Regions
+## Example 2: Comparing Regions (continents)
 
 Let us compare earthquake death toll by continents. As before, we filter the original tibble `df` according to our specific needs, including the `Region` column.
 
@@ -116,9 +106,9 @@ eq_all <- df |>
   filter(
     `Disaster Type` == "Earthquake",
     `Start Year` >= 2000,
-    `Start Year` < 2024
+    `Start Year` <= 2023
   ) |>
-  select(`Start Year`, Magnitude, Region, `Total Deaths`, `Total Affected`)
+  select(`Start Year`, Magnitude, Region, `Total Deaths`)
 
 head(eq_all, 5)
 ```
@@ -127,7 +117,7 @@ In this case,
 
 - Use [`group_by`](https://dplyr.tidyverse.org/reference/group_by.html) to group based on the `Region` column;
 - Use [`summarise`](https://dplyr.tidyverse.org/reference/summarise.html) with `sum` as the aggregation function for the `Total Deaths` field;
-- Pass `na.rm = TRUE` to ignore missing values, which otherwise propagate and make the whole sum `NA`.
+- Pass `na.rm = TRUE` to ignore missing values, which otherwise propagate and make the whole sum `NA` whenever a missing value is encountered.
 
 ```{r}
 eq_sum <- eq_all |>
@@ -137,71 +127,73 @@ eq_sum <- eq_all |>
 eq_sum
 ```
 
-Finally, let us make a horizontal bar chart of it. In particular,
+Finally, let us make a horizontal bar chart of it.
 
-- map `Total Deaths` to the x axis and `Region` to the y axis to obtain horizontal bars;
-- use [`scale_y_discrete`](https://ggplot2.tidyverse.org/reference/scale_discrete.html) with `limits = rev` to display the regions in alphabetical order from top to bottom;
+- We map `Total Deaths` to the x axis and `Region` to the y axis to obtain horizontal bars;
+- By default, the vertical axis would display the `Region` values in alphabetical order from bottom to top. Here we use [`scale_y_discrete`](https://ggplot2.tidyverse.org/reference/scale_discrete.html) with `limits = rev` to reverse the order in which they appear;
 - use [`label_number`](https://scales.r-lib.org/reference/label_number.html) from the `scales` package to express the x axis in thousands of deaths.
 
 ```{r}
-options(repr.plot.width = 5, repr.plot.height = 3)
-
 ggplot(eq_sum, aes(x = `Total Deaths`, y = Region)) +
   geom_col() +
   scale_y_discrete(limits = rev) +
-  scale_x_continuous(labels = scales::label_number(scale = 1e-3, suffix = "k")) +
+  scale_x_continuous(
+    labels = scales::label_number(scale = 1e-3, suffix = "k")
+  ) +
   labs(
     x = "Total Earthquake Deaths",
     y = NULL,
-    title = "EM-DAT Earthquake Deaths by Regions"
+    title = "EM-DAT Earthquake Deaths by Regions (2000-2023)"
   )
 ```
 
 ## Example 3: Multiple Grouping
 
-At last, let us report the earthquake time series by continents. We group by both `Region` and `Start Year`, and set `.groups = "drop"` so that the result is returned as a plain, ungrouped tibble ready for further processing.
+At last, let us report the earthquake time series by continents. We group by both `Region` and `Start Year`, and set `.groups = "drop"` so that the result is returned as a plain, ungrouped tibble ready for further processing. We could also use the `ungroup` function (from `dplyr`) to do so.
 
 ```{r}
-eq_reg_ts <- eq_all |>
+eq_region_year <- eq_all |>
   group_by(Region, `Start Year`) |>
-  summarise(`Total Deaths` = sum(`Total Deaths`, na.rm = TRUE), .groups = "drop")
+  summarise(
+    `Total Deaths` = sum(`Total Deaths`, na.rm = TRUE),
+    .groups = "drop"
+  )
 
-eq_reg_ts
+eq_region_year
 ```
 
-Next, we apply the [`pivot_wider`](https://tidyr.tidyverse.org/reference/pivot_wider.html) function to restructure the table, spreading the regions across columns.
+Next, we apply the [`pivot_wider`](https://tidyr.tidyverse.org/reference/pivot_wider.html) function to restructure the table, spreading the regions across columns, one row per `Start Year`.
 
-**Note**: Unlike many plotting libraries, `ggplot2` expects *long* data, where each row is one observation and grouping variables live in their own columns. The long `eq_reg_ts` table above is therefore already in the right shape for plotting. We still show the pivot here because the wide layout is convenient for reading the numbers as a table, and for exporting to a spreadsheet.
+**Note**: Unlike many plotting libraries, `ggplot2` expects *long* data, where each row is one observation and grouping variables live in their own columns. The long `eq_region_year` table above is therefore already in the right shape for plotting. We still show the pivot here because the wide layout is convenient for reading the numbers as a table, and for exporting to a spreadsheet.
 
 ```{r}
-eq_pivot_ts <- eq_reg_ts |>
+eq_region_year_w <- eq_region_year |>
   pivot_wider(names_from = Region, values_from = `Total Deaths`)
 
-head(eq_pivot_ts)
+head(eq_region_year_w)
 ```
 
 Let us plot the long table as a stacked bar chart, mapping `Region` to the `fill` aesthetic.
 
 ```{r}
-options(repr.plot.width = 7, repr.plot.height = 3.5)
-
-ggplot(eq_reg_ts, aes(x = `Start Year`, y = `Total Deaths`, fill = Region)) +
+ggplot(
+  eq_region_year,
+  aes(x = `Start Year`, y = `Total Deaths`, fill = Region)
+) +
   geom_col() +
   labs(y = "Total Deaths", title = "EM-DAT Earthquake Deaths by Regions")
 ```
 
-In order to be able to visualize the data in more detail, let us split the chart into one panel per region using [`facet_wrap`](https://ggplot2.tidyverse.org/reference/facet_wrap.html). Setting `scales = "free_y"` lets each panel use its own y axis range.
+In order to be able to visualize the data in more detail, let us split the chart into one panel per region using [`facet_wrap`](https://ggplot2.tidyverse.org/reference/facet_wrap.html). Setting `scales = "free_y"` lets each `Region` panel use its own y axis range.
 
 ```{r}
-options(repr.plot.width = 7, repr.plot.height = 7)
-
-ggplot(eq_reg_ts, aes(x = `Start Year`, y = `Total Deaths`)) +
+ggplot(eq_region_year, aes(x = `Start Year`, y = `Total Deaths`)) +
   geom_col() +
-  facet_wrap(~ Region, ncol = 1, scales = "free_y") +
+  facet_wrap(~Region, ncol = 1, scales = "free_y") +
   labs(y = "Total Deaths")
 ```
 
-We have just covered the most common manipulations applied to a [`dplyr`](https://dplyr.tidyverse.org/) tibble containing the EM-DAT data. To delve further into your analyses, we encourage you to continue your learning of [dplyr](https://dplyr.tidyverse.org/) and [ggplot2](https://ggplot2.tidyverse.org/) with the many resources available online, starting with [R for Data Science](https://r4ds.hadley.nz/).
+We have just covered the most common manipulations applied to a [`dplyr`](https://dplyr.tidyverse.org/) tibble containing the EM-DAT data. We encourage you to continue your learning of [dplyr](https://dplyr.tidyverse.org/) and [ggplot2](https://ggplot2.tidyverse.org/) with the many resources available online, starting with [R for Data Science](https://r4ds.hadley.nz/).
 
-If you are interested in learning the basics of making maps based on EM-DAT data, you can also follow the [EM-DAT R Tutorial 2: Making Maps](./r_tutorial_2_making_maps.ipynb).
+If you are interested in learning the basics of making maps based on EM-DAT data, you can also follow the [EM-DAT R Tutorial 2: Making Maps](./r_tutorial_2_making_maps.Rmd).
 
